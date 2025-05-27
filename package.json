@@ -1,5 +1,5 @@
 {
-  "name": "react-codemirror-tailwind",
+  "name": "olmap",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,14 +7,15 @@
     "build": "webpack --mode production"
   },
   "dependencies": {
-    "@codemirror/lang-javascript": "^6.2.3",
-    "@uiw/react-codemirror": "^4.23.10",
+    "ol": "^10.5.0",
+    "ol-ext": "^4.0.31",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.16",
     "@tailwindcss/postcss": "^4.1.4",
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@^3.6.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
