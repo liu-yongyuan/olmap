@@ -13,9 +13,36 @@ import Feature from "ol/Feature";
 import { fromExtent } from "ol/geom/Polygon";
 import Transform from "ol-ext/interaction/Transform";
 import { shiftKeyOnly } from "ol/events/condition";
+import { MapBrowserEvent, Overlay } from "ol";
+import * as Extent from "ol/extent";
+
+const useTransform = (map: Map, vectorLayer: VectorLayer) => {
+  // ol-ext Transform
+  const transform = new Transform({
+    layers: [vectorLayer],
+    enableRotatedTransform: false,
+    addCondition: shiftKeyOnly,
+    hitTolerance: 2,
+    translateFeature: false,
+    scale: true,
+    rotate: true,
+    keepAspectRatio: undefined,
+    keepRectangle: false,
+    translate: true,
+    stretch: true,
+    // Get scale on points
+    pointRadius: function (f) {
+      var radius = f.get("radius") || 10;
+      return [radius, radius];
+    },
+  });
+
+  map.addInteraction(transform);
+};
 
 const MapComponent = () => {
   const mapRef = useRef(null);
+  const popupRef = useRef(null);
 
   useEffect(() => {
     // Style
@@ -81,41 +108,38 @@ const MapComponent = () => {
       }),
     });
 
-    // ol-ext Transform
-    const transform = new Transform({
-      layers: [vectorLayer],
-      enableRotatedTransform: false,
-      addCondition: shiftKeyOnly,
-      hitTolerance: 2,
-      translateFeature: false,
-      scale: true,
-      rotate: true,
-      keepAspectRatio: undefined,
-      keepRectangle: false,
-      translate: true,
-      stretch: true,
-      // Get scale on points
-      pointRadius: function (f) {
-        var radius = f.get("radius") || 10;
-        return [radius, radius];
-      },
+    const popup = new Overlay({
+      element: popupRef.current!,
+      autoPan: true,
     });
+    map.addOverlay(popup);
 
-    map.addInteraction(transform);
-
-    // setTimeout(() => {
-    //   map.removeInteraction(transform);
-    //   map.removeLayer(vectorLayer);
-    // }, 10 * 1000);
+    map.on("singleclick", (evt) => {
+      const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
+      if (feature) {
+        const geometry = feature.getGeometry();
+        const coordinates = (geometry as Point)!.getCoordinates()!;
+        popup.setPosition(Extent.getCenter(geometry!.getExtent()));
+        popup.getElement()!.innerHTML = `type: ${geometry?.getType()} coordinates: ${coordinates}`;
+        popup.getElement()!.style.display = "block";
+      }
+    });
 
     return () => map.setTarget(undefined);
   }, []);
 
   return (
-    <div
-      ref={mapRef}
-      className="w-full h-[600px] border border-gray-300 rounded-md shadow"
-    />
+    <>
+      <div
+        ref={mapRef}
+        className="w-full h-[600px] border border-gray-300 rounded-md shadow"
+      />
+      <div
+        ref={popupRef}
+        className="h-[200px] w-[300px] bg-slate-400 border border-gray-50 rounded-md shadow-md overflow-auto"
+      >
+      </div>
+    </>
   );
 };
 
