@@ -12,15 +12,30 @@ import Feature from "ol/Feature";
 import { fromExtent } from "ol/geom/Polygon";
 import Transform from "ol-ext/interaction/Transform";
 import ModifyFeature from "ol-ext/interaction/ModifyFeature";
-import { shiftKeyOnly } from "ol/events/condition";
+import { never, shiftKeyOnly } from "ol/events/condition";
 import { MapBrowserEvent, Overlay } from "ol";
 import * as Extent from "ol/extent";
 import MarkerPopup from "./marker-popup";
+import CircleStyle from "ol/style/Circle";
 
 const useModify = (map: Map, source: VectorSource) => {
+  const editStyle = new Style({
+    image: new CircleStyle({
+      radius: 6,
+      fill: new Fill({ color: "#ffffff" }),
+      stroke: new Stroke({ color: "#ff0000", width: 2 }),
+    }),
+    stroke: new Stroke({
+      color: "#00ccff",
+      width: 2,
+    }),
+  });
   const modify = new ModifyFeature({
     source,
+    insertVertexCondition: () => true, // 总是允许插入点
+    style: editStyle,
   });
+  console.log(modify);
   map.addInteraction(modify);
 };
 
@@ -79,7 +94,7 @@ const initData = () => {
           ],
         ])
       ),
-      new Feature(
+      /* new Feature(
         new LineString([
           [406033, 5664901],
           [689767, 5718712],
@@ -88,13 +103,13 @@ const initData = () => {
         ])
       ),
       new Feature(new Point([269914, 6248592])),
-      new Feature(new Circle([500000, 6400000], 100000)),
+      new Feature(new Circle([500000, 6400000], 100000)), */
     ],
   });
 
   const vectorLayer = new VectorLayer({
     source: vectorSource,
-    style: getStyle,
+    // style: getStyle,
   });
 
   return vectorLayer;
@@ -105,7 +120,29 @@ const MapComponent = () => {
   const [map, setMap] = useState<Map | null>(null);
 
   useEffect(() => {
-    const vectorLayer = initData();
+    const vectorSource = new VectorSource({
+      features: [
+        new Feature(
+          new Polygon([
+            [
+              [34243, 6305749],
+              [-288626, 5757848],
+              [210354, 5576845],
+              [300000, 6000000],
+              [34243, 6305749],
+            ],
+          ])
+        ),
+      ],
+    });
+
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+      style: new Style({
+        fill: new Fill({ color: "rgba(0, 150, 255, 0.3)" }),
+        stroke: new Stroke({ color: "#0096ff", width: 2 }),
+      }),
+    });
     // 地图实例
     const map = new Map({
       target: mapRef.current!,
@@ -121,8 +158,31 @@ const MapComponent = () => {
       }),
     });
 
+    // 自定义编辑点样式，让顶点和中点都明显
+    const modifyStyle = new Style({
+      image: new CircleStyle({
+        radius: 7,
+        fill: new Fill({ color: "#ffffff" }),
+        stroke: new Stroke({ color: "#ff0000", width: 2 }),
+      }),
+      stroke: new Stroke({
+        color: "#00ccff",
+        width: 2,
+      }),
+    });
+
+    // 创建 ol-ext 的 ModifyFeature 交互
+    const modify = new ModifyFeature({
+      source: vectorSource,
+      style: modifyStyle,
+      // insertVertexCondition: never
+    });
+
+    // 添加到地图交互
+    map.addInteraction(modify);
+
     // useTransform(map, vectorLayer);
-    useModify(map, vectorLayer.getSource()!);
+    // useModify(map, vectorLayer.getSource()!);
 
     setMap(map);
 
